@@ -3,7 +3,7 @@ This is the repository for our paper "[Beam Retrieval: General End-to-End Retrie
 
 Our repository is under construction, feel free to contact us if you have any questions.
 
-Our results have been published on [MuSiQue-Ans](https://leaderboard.allenai.org/musique_ans/submissions/public)
+Our results have been published on [MuSiQue-Ans](https://leaderboard.allenai.org/musique_ans/submissions/public) and [2WikiMultihopQA](https://github.com/Alab-NII/2wikimultihop)
 
 ## Download Data and Model
 We use three original datasets [MuSiQue-Ans](https://github.com/StonyBrookNLP/musique/), [HotpotQA](https://hotpotqa.github.io/) and [2WikiMultihopQA](https://github.com/Alab-NII/2wikimultihop) for our main 
