@@ -1,5 +1,5 @@
 # Beam Retrieval: General End-to-End Retrieval for Multi-Hop Question Answering
-This is the repository for our paper "Beam Retrieval: General End-to-End Retrieval for Multi-Hop Question Answering".
+This is the repository for our paper "[Beam Retrieval: General End-to-End Retrieval for Multi-Hop Question Answering](https://arxiv.org/abs/2308.08973)".
 
 Our repository is under construction, feel free to contact us if you have any questions.
 
