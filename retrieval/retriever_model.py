@@ -4,6 +4,36 @@ import math
 import random
 
 
+import torch.nn.functional as F
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=0.25, gamma=2, reduction='mean'):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, inputs, targets):
+        # 计算交叉熵损失
+        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+
+        # 计算权重（alpha）
+        p_t = torch.exp(-ce_loss)
+        alpha_t = self.alpha * (1 - p_t)
+
+        # 计算Focal Loss
+        focal_loss = alpha_t * (1 - p_t) ** self.gamma * ce_loss
+
+        # 根据reduction参数选择损失的计算方式
+        if self.reduction == 'mean':
+            return torch.mean(focal_loss)
+        elif self.reduction == 'sum':
+            return torch.sum(focal_loss)
+        elif self.reduction == 'none':
+            return focal_loss
+        else:
+            raise ValueError("Unsupported reduction mode. Use 'mean', 'sum', or 'none'.")
+
 class Retriever(nn.Module):
 
     def __init__(self,
@@ -16,17 +46,20 @@ class Retriever(nn.Module):
                  gradient_checkpointing=False,
                  use_label_order=False,
                  use_negative_sampling=False,
+                 use_focal=False,
+                 use_early_stop=True,
                  ):
         super().__init__()
-
         self.encoder = encoder_class.from_pretrained(model_name, config=config)
         self.config = config
         self.max_seq_len = max_seq_len
-        self.mean_passage_len = mean_passage_len
+        self.mean_passage_len = mean_passage_len # deprecated
         self.beam_size = beam_size
         self.gradient_checkpointing = gradient_checkpointing
         self.use_label_order = use_label_order # the label order is given for musique
         self.use_negative_sampling = use_negative_sampling if beam_size > 1 else False # whether use negative sampling, deprecated
+        self.use_focal = use_focal
+        self.use_early_stop = use_early_stop
         self.hop_classifier_layer = nn.Linear(config.hidden_size, 2)
         self.hop_n_classifier_layer = nn.Linear(config.hidden_size, 2)
         # self.hop1_classifier_layer = nn.Linear(config.hidden_size, 2)
@@ -66,21 +99,26 @@ class Retriever(nn.Module):
         last_prediction = None
         pre_question_ids = None
         loss_function = nn.CrossEntropyLoss()
+        focal_loss_function = None
+        if self.use_focal:
+            focal_loss_function = FocalLoss()
         question_ids = q_codes[0]
         context_ids = c_codes[0]
+        current_preds = []
         if self.training:
             sf_idx = sf_idx[0]
             sf = sf_idx
             hops = len(sf)
         else:
             hops = hop if hop > 0 else len(sf_idx[0])
-        if len(context_ids) <= hops:
+        if len(context_ids) <= hops or hops < 1:
             return {'current_preds': [list(range(hops))],
                'loss': total_loss}
+        mean_passage_len = (self.max_seq_len - 2 - question_ids.shape[-1]) // hops
         for idx in range(hops):
             if idx == 0:
                 # first hop
-                qp_len = [min(self.max_seq_len - 2 - (hops - 1 - idx) * self.mean_passage_len, question_ids.shape[-1]+c.shape[-1]) for c in context_ids]
+                qp_len = [min(self.max_seq_len - 2 - (hops - 1 - idx) * mean_passage_len, question_ids.shape[-1]+c.shape[-1]) for c in context_ids]
                 next_question_ids = []
                 hop1_qp_ids = torch.zeros([len(context_ids), max(qp_len) + 2], device=device, dtype=torch.long)
                 hop1_qp_attention_mask = torch.zeros([len(context_ids), max(qp_len) + 2], device=device, dtype=torch.long)
@@ -129,7 +167,7 @@ class Retriever(nn.Module):
                             if set(current_preds[i]) == set(sf_idx[:idx]):
                                 flag = True
                                 break
-                    if not flag:
+                    if not flag and self.use_early_stop:
                         break
                 for i in range(self.beam_size):
                     # expand the search space, and self.beam_size is the number of predicted passages
@@ -142,7 +180,7 @@ class Retriever(nn.Module):
                     for j in range(len(context_ids)):
                         if j in current_preds[i] or j in last_pred_idx:
                             continue 
-                        qp_len[j] = min(self.max_seq_len - 2 - (hops - 1 - idx) * self.mean_passage_len, new_question_ids.shape[-1]+context_ids[j].shape[-1])
+                        qp_len[j] = min(self.max_seq_len - 2 - (hops - 1 - idx) * mean_passage_len, new_question_ids.shape[-1]+context_ids[j].shape[-1])
                         max_qp_len = max(max_qp_len, qp_len[j])
                     qp_len_total[i] = qp_len
                 if len(qp_len_total) < 1:
@@ -195,12 +233,12 @@ class Retriever(nn.Module):
                                 if set(current_preds[i] + [j]) == set(sf_idx[:idx+1]):
                                     hop_label[vec_idx] = 1
                             else:
-                                if self.use_label_order:
-                                    if set(current_preds[i] + [j]) == set(sf_idx[:idx+1]):
-                                        hop_label[vec_idx] = 1
-                                else:
-                                    if j in sf_idx:
-                                        hop_label[vec_idx] = 1 
+                                # if self.use_label_order:
+                                if set(current_preds[i] + [j]) == set(sf_idx[:idx+1]):
+                                    hop_label[vec_idx] = 1
+                                # else:
+                                #     if j in sf_idx:
+                                #         hop_label[vec_idx] = 1 
                         pred_mapping.append(current_preds[i] + [j])
                         vec_idx += 1
 
@@ -218,7 +256,10 @@ class Retriever(nn.Module):
                 else:
                     hop_projection = hop_projection_func(hop_encoder_outputs) # [vec_num, 2]
                 if self.training:
-                    total_loss = total_loss + loss_function(hop_projection, hop_label)
+                    if not self.use_focal:
+                        total_loss = total_loss + loss_function(hop_projection, hop_label)
+                    else:
+                        total_loss = total_loss + focal_loss_function(hop_projection, hop_label)
                 _, hop_pred_documents = hop_projection[:, 1].topk(self.beam_size, dim=-1)
                 last_prediction = hop_pred_documents
                 pre_question_ids = next_question_ids
@@ -254,3 +295,4 @@ class SingleHopRetriever(nn.Module):
         '''
         q = self.encode_seq(input_ids, mask)
         return q
+    

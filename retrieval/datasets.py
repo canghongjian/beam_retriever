@@ -14,18 +14,19 @@ class HotpotQADataset(Dataset):
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.type = type
+        self.max_passages_num = 25
         print("beginning to read data from " + data_path)
-        if self.type == 'hotpot':
+        if self.type.startswith('hotpot'):
             with open(data_path, 'r') as f:
                 self.data = json.load(f)
-        elif self.type == 'musique':
+        else:
             musique_train_data = open(data_path).readlines()
             self.data = [json.loads(item) for item in musique_train_data]
         print(f"Total sample count {len(self.data)}")
 
     def __getitem__(self, index):
         sample = self.data[index]
-        question = sample['question']
+        question = sample['question'] if self.type != 'iirc' else (sample['question_text'] + sample['pinned_contexts'][0]['paragraph_text'])
         if question.endswith("?"):
             question = question[:-1]
         q_codes = self.tokenizer.encode(question, add_special_tokens=False, return_tensors="pt", truncation=True, max_length=self.max_len).squeeze(0)
@@ -33,6 +34,7 @@ class HotpotQADataset(Dataset):
         c_codes = []
         sf_idx = []
         if self.type == 'hotpot':
+            id = sample['_id']
             for sup in sample['supporting_facts']:
                 sp_title_set.add(sup[0])
             for idx, (title, sentences) in enumerate(sample['context']):
@@ -43,6 +45,7 @@ class HotpotQADataset(Dataset):
                 c_codes.append(encoding)
         elif self.type == 'musique':
             # musique
+            id = sample['id']
             for i, para in enumerate(sample['paragraphs']):
                 # if para['is_supporting']:
                 #     sf_idx.append(i)
@@ -52,11 +55,30 @@ class HotpotQADataset(Dataset):
             # label order
             for item_json in sample['question_decomposition']:
                 sf_idx.append(item_json['paragraph_support_idx'])
+        elif self.type == 'iirc':
+            id = sample['question_id']
+            for i, para in enumerate(sample['contexts']):
+                if i > self.max_passages_num:
+                    break
+                l = para['title'] + '.' + para['paragraph_text']
+                encoding = self.tokenizer.encode(l, add_special_tokens=False, return_tensors="pt", truncation=True, max_length=self.max_len-q_codes.shape[-1]).squeeze(0)
+                c_codes.append(encoding)
+                if para['is_supporting']:
+                    sf_idx.append(para['idx'])
+        elif self.type == 'hotpot_reranker':
+            id = sample['_id']
+            for i, para in enumerate(sample['paragraphs']):
+                l = para['title'] + '.' + para['paragraph_text']
+                encoding = self.tokenizer.encode(l, add_special_tokens=False, return_tensors="pt", truncation=True, max_length=self.max_len-q_codes.shape[-1]).squeeze(0)
+                c_codes.append(encoding)
+                if para['is_supporting']:
+                    sf_idx.append(i)
+        
         res = {
             'q_codes': q_codes,
             'c_codes': c_codes,
             'sf_idx': sf_idx,
-            'id': sample['_id'] if self.type=='hotpot' else sample['id'],
+            'id': id,
         }
         return res
 

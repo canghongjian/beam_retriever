@@ -1,0 +1,24 @@
+Write a high-quality answer for the given question using only the provided search results. You should come out the answer without any other words.
+
+For example:
+Document [1](Title: Stuart Rosenberg) Stuart Rosenberg (August 11, 1927 – March 15, 2007) was an American film and television director whose motion pictures include "Cool Hand Luke" (1967), "Voyage of the Damned" (1976), "The Amityville Horror" (1979), and "The Pope of Greenwich Village" (1984).He was noted for his work with actor Paul Newman.
+Document [2](Title: Méditerranée (1963 film)) Méditerranée is a 1963 French experimental film directed by Jean-Daniel Pollet with assistance from Volker Schlöndorff.It was written by Philippe Sollers and produced by Barbet Schroeder, with music by Antione Duhamel.The 45 minute film is cited as one of Pollet's most influential films, which according to Jonathan Rosenbaum directly influenced Jean-Luc Goddard's "Contempt", released later the same year.Footage for the film was shot around the Mediterranean, including at a Greek temple, a Sicilian garden, the sea, and also features a fisherman, a bullfighter, and a girl on an operating table.
+Document [3](Title: Move (1970 film)) Move is a 1970 American comedy film starring Elliott Gould, Paula Prentiss and Geneviève Waïte, and directed by Stuart Rosenberg.The screenplay was written by Joel Lieber and Stanley Hart, adapted from a novel by Lieber.
+Document [4](Title: Jean-Daniel Pollet) Jean-Daniel Pollet (1936–2004) was a French film director and screenwriter who was most active in the 1960s and 1970s.He was associated with two approaches to filmmaking: comedies which blended burlesque and melancholic elements, and poetic films based on texts by writers such as the French poet Francis Ponge.
+Question: Are director of film Move (1970 Film) and director of film Méditerranée (1963 Film) from the same country?
+Answer: no
+
+Document [1](Title: Mina Gerhardsen) Mina Gerhardsen (born 14 September 1975) is a Norwegian politician for the Labour Party.She is the daughter of Rune Gerhardsen and Tove Strand, and granddaughter of Einar Gerhardsen.She is married to Eirik Øwre Thorshaug.She led the Oslo branch of Natur og Ungdom from 1993 to 1995, and was deputy leader of the Workers' Youth League in Oslo in 1997.She took the cand.mag.degree at the University of Oslo in 1998, and also has master's degrees in pedagogy from 2000 and human geography from 2003.From 1999 to 2002 she worked part-time as a journalist in "Dagsavisen" and "Dagbladet".She then worked in the Norwegian Red Cross from 2002 to 2004, except for a period from 2003 to 2004 as a journalist in "Mandag Morgen".She was hired as a political advisor in the Norwegian Office of the Prime Minister in 2005, when Stoltenberg's Second Cabinet assumed office.In 2009 she was promoted to State Secretary.In 2011 she changed to the Ministry of Culture.
+Document [2](Title: Rune Gerhardsen) Rune Gerhardsen (born 13 June 1946) is a Norwegian politician, representing the Norwegian Labour Party.He is a son of Werna and Einar Gerhardsen, and attended Oslo Cathedral School.He chaired the Workers' Youth League from 1973 to 1975 and chaired the City Government of Oslo from 1992 to 1997.He chaired the Norwegian Skating Association from 1986 to 1990 and 2001 to 2003 and also 2013 to 2017.
+Question: What is the date of birth of Mina Gerhardsen's father?
+Answer: 13 June 1946
+
+Document [1](Title: Wedding Night in Paradise (1950 film)) Wedding Night in Paradise  is a 1950 West German musical comedy film directed by Géza von Bolváry and starring Johannes Heesters, Claude Farell and Gretl Schörg.It is an operetta film, based on the 1942 stage work of the same title.The film's sets were designed by Paul Markwitz and Fritz Maurischat.
+Document [2](Title: Géza von Bolváry) Géza von Bolváry (full name Géza Maria von Bolváry-Zahn; 26 December 1897 – 10 August 1961) was a Hungarian actor, screenwriter and film director, who worked principally in Germany and Austria.
+Question: What nationality is the director of film Wedding Night In Paradise (1950 Film)?
+Answer: Hungarian
+
+{search_results}
+
+Question: {question}
+Answer:
