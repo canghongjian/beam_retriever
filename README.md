@@ -28,9 +28,9 @@ You can also obtain the scores through running `test_model_tmp.py` after trainin
 @inproceedings{
 zhang2024endtoend,
 title={End-to-End Beam Retrieval for Multi-Hop Question Answering},
-author={Jiahao Zhang and Haiyang Zhang and Dongmei Zhang and Liu Yong and Shen Huang},
+author={Jiahao Zhang and Haiyang Zhang and Dongmei Zhang and Yong Liu and Shen Huang},
 booktitle={2024 Annual Conference of the North American Chapter of the Association for Computational Linguistics},
 year={2024},
-url={https://openreview.net/forum?id=au5aGogJQX}
+url={https://arxiv.org/abs/2308.08973}
 }
 ```
